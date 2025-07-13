@@ -11,7 +11,7 @@
   "dependencies": {
     "react-dom": "^19.1.0",
     "react": "^19.1.0",
-    "@google/genai": "^1.8.0",
+    "@google/genai": "0.15.0",
     "docx": "8.5.0",
     "file-saver": "2.0.5"
   },

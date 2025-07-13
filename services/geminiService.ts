@@ -1,74 +1,57 @@
 // src/services/geminiService.ts
 
-// [수정] 올바른 import 구문으로 변경합니다.
+// [최종 수정] 가장 안정적인 import 방식으로 변경
 import {
   GoogleGenerativeAI,
   HarmCategory,
-  HarmBlockThreshold,
-  type GenerateContentResponse,
-} from "@google/genai";
+  HarmBlockThreshold
+} from "@google/generative-ai"; // 패키지 이름이 @google/generative-ai 로 변경될 수 있음. 확인 필요.
+
+// 만약 위 import가 안되면, 아래 것으로 시도.
+// import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/genai";
+
+
 import { SERMON_STYLES, SermonStyleKey, ScriptureResultItem, ScriptureSearchSchema } from '../types';
 
-// Vite 환경 변수에서 API 키를 가져옵니다.
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
 if (!API_KEY) {
-  // 개발자에게 명확한 에러 메시지 제공
-  throw new Error("VITE_GEMINI_API_KEY is not set. Please add it to your .env.local file for local development, or to your Vercel environment variables for deployment.");
+  throw new Error("VITE_GEMINI_API_KEY is not set.");
 }
 
-// GoogleGenerativeAI 인스턴스를 생성합니다.
 const genAI = new GoogleGenerativeAI(API_KEY);
-
-// 모델 이름을 상수로 관리하여 변경 및 유지보수가 용이하도록 합니다.
 const MODEL_NAME = "gemini-2.5-pro";
 
-/**
- * AI 콘텐츠 생성을 위한 중앙 함수. JSON 모드와 스키마를 지원합니다.
- * @param systemInstruction - AI의 역할과 지침을 정의하는 시스템 프롬프트.
- * @param userPrompt - 사용자의 구체적인 요청.
- * @param jsonResponse - 응답을 JSON 형식으로 받을지 여부.
- * @param schema - JSON 응답 시 사용할 스키마.
- * @returns 생성된 콘텐츠 텍스트.
- */
 const generateContent = async (systemInstruction: string, userPrompt: string, jsonResponse = false, schema: object | null = null): Promise<string> => {
   try {
     const model = genAI.getGenerativeModel({
       model: MODEL_NAME,
-      systemInstruction: {
-        parts: [{ text: systemInstruction }],
-        role: "model"
-      },
-      // 안전 설정: 유해 콘텐츠 차단 수준을 조정할 수 있습니다.
+      systemInstruction: { parts: [{ text: systemInstruction }], role: "model" },
       safetySettings: [
         { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
         { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
       ]
     });
 
-    const generationConfig = {
-      // JSON 모드를 사용할 경우 responseMimeType 설정
+    const generationConfig: any = {
       responseMimeType: jsonResponse ? "application/json" : "text/plain",
-      // JSON 모드 + 스키마를 사용할 경우 responseSchema 설정
-      responseSchema: (jsonResponse && schema) ? schema : undefined,
     };
+    
+    if (jsonResponse && schema) {
+      generationConfig.responseSchema = schema;
+    }
 
     const result = await model.generateContent(userPrompt, generationConfig);
     const response = result.response;
-    
-    // API 응답 텍스트가 비어있는 경우를 처리합니다.
     return response.text() || "";
-
   } catch (error) {
     console.error("Error generating content:", error);
-    // Error 객체를 던져서 App.tsx에서 catch 블록이 실행되도록 합니다.
     if (error instanceof Error) {
       throw new Error(`콘텐츠 생성 중 오류가 발생했습니다: ${error.message}`);
     }
     throw new Error("콘텐츠 생성 중 알 수 없는 오류가 발생했습니다.");
   }
 };
-
 
 // --- 각 기능별 생성 함수 ---
 
