@@ -1,11 +1,15 @@
 // src/services/geminiService.ts
 
-import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold, type GenerateContentResponse } from "@google/genai";
+// [수정] 올바른 import 구문으로 변경합니다.
+import {
+  GoogleGenerativeAI,
+  HarmCategory,
+  HarmBlockThreshold,
+  type GenerateContentResponse,
+} from "@google/genai";
 import { SERMON_STYLES, SermonStyleKey, ScriptureResultItem, ScriptureSearchSchema } from '../types';
 
-// [개선 1: 보안 및 Vite 환경 호환]
-// process.env -> import.meta.env로 변경.
-// 이 키는 Vercel 환경 변수나 .env.local 파일에 `VITE_GEMINI_API_KEY=...` 형식으로 저장해야 합니다.
+// Vite 환경 변수에서 API 키를 가져옵니다.
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
 if (!API_KEY) {
@@ -13,11 +17,9 @@ if (!API_KEY) {
   throw new Error("VITE_GEMINI_API_KEY is not set. Please add it to your .env.local file for local development, or to your Vercel environment variables for deployment.");
 }
 
-// [개선 2: SDK 사용법 수정]
-// 최신 SDK 권장 방식에 따라 GoogleGenerativeAI 인스턴스를 생성합니다.
+// GoogleGenerativeAI 인스턴스를 생성합니다.
 const genAI = new GoogleGenerativeAI(API_KEY);
 
-// [개선 5: 효율성]
 // 모델 이름을 상수로 관리하여 변경 및 유지보수가 용이하도록 합니다.
 const MODEL_NAME = "gemini-2.5-pro";
 
@@ -54,15 +56,12 @@ const generateContent = async (systemInstruction: string, userPrompt: string, js
     const result = await model.generateContent(userPrompt, generationConfig);
     const response = result.response;
     
-    // [개선 3: 안정성]
     // API 응답 텍스트가 비어있는 경우를 처리합니다.
     return response.text() || "";
 
   } catch (error) {
     console.error("Error generating content:", error);
-    // [개선 3: 에러 핸들링]
-    // 단순히 문자열을 반환하는 대신, Error 객체를 던져서 App.tsx에서 catch 블록이 실행되도록 합니다.
-    // 이렇게 해야 isLoading, error 상태 관리가 정상적으로 이루어집니다.
+    // Error 객체를 던져서 App.tsx에서 catch 블록이 실행되도록 합니다.
     if (error instanceof Error) {
       throw new Error(`콘텐츠 생성 중 오류가 발생했습니다: ${error.message}`);
     }
@@ -99,8 +98,6 @@ export const generateScriptureSearch = (query: string, existingResultsJson: stri
   
   let userPrompt = `검색어: "${query}"\n\n이 검색어와 관련된 성경 구절을 5개 찾아주세요.`;
   
-  // [개선 4: 프롬프트 강화]
-  // 기존 결과가 있을 경우, 제외하라는 지시를 더 명확하게 합니다.
   if (existingResultsJson) {
       try {
           const existingResults: ScriptureResultItem[] = JSON.parse(existingResultsJson);
@@ -110,11 +107,9 @@ export const generateScriptureSearch = (query: string, existingResultsJson: stri
           }
       } catch(e) {
           console.error("Could not parse existing results for follow-up query", e);
-          // 파싱 실패 시, 기존 프롬프트로 안전하게 실행
       }
   }
   
-  // types.ts 파일에 정의된 ScriptureSearchSchema를 사용
   return generateContent(systemInstruction, userPrompt, true, ScriptureSearchSchema);
 };
 
@@ -166,7 +161,6 @@ export const generateEventContent = (eventType: string, names: string, details: 
       userPrompt = basePrompt('입학/졸업 격려사', names, details, scripture);
       break;
     default:
-      // 유효하지 않은 이벤트 타입에 대해 즉시 에러를 던집니다.
       throw new Error("유효하지 않은 행사 종류입니다.");
   }
 
