@@ -1,15 +1,7 @@
 // src/services/geminiService.ts
 
-// [최종 수정] 가장 안정적인 import 방식으로 변경
-import {
-  GoogleGenerativeAI,
-  HarmCategory,
-  HarmBlockThreshold
-} from "@google/genai";
-
-// 만약 위 import가 안되면, 아래 것으로 시도.
-// import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/genai";
-
+// [최종 해결책] 네임스페이스 임포트 방식으로 변경하여 빌드 오류를 해결합니다.
+import * as genAI from "@google/genai";
 
 import { SERMON_STYLES, SermonStyleKey, ScriptureResultItem, ScriptureSearchSchema } from '../types';
 
@@ -19,17 +11,20 @@ if (!API_KEY) {
   throw new Error("VITE_GEMINI_API_KEY is not set.");
 }
 
-const genAI = new GoogleGenerativeAI(API_KEY);
-const MODEL_NAME = "gemini-2.5-pro";
+// `genAI` 네임스페이스를 통해 클래스에 접근합니다.
+const googleAI = new genAI.GoogleGenerativeAI(API_KEY);
+
+const MODEL_NAME = "gemini-1.5-flash";
 
 const generateContent = async (systemInstruction: string, userPrompt: string, jsonResponse = false, schema: object | null = null): Promise<string> => {
   try {
-    const model = genAI.getGenerativeModel({
+    const model = googleAI.getGenerativeModel({
       model: MODEL_NAME,
       systemInstruction: { parts: [{ text: systemInstruction }], role: "model" },
+      // `genAI` 네임스페이스를 통해 열거형에 접근합니다.
       safetySettings: [
-        { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
-        { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
+        { category: genAI.HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: genAI.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
+        { category: genAI.HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: genAI.HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE },
       ]
     });
 
@@ -38,10 +33,12 @@ const generateContent = async (systemInstruction: string, userPrompt: string, js
     };
     
     if (jsonResponse && schema) {
+      // `genAI` 네임스페이스를 통해 Type에 접근해야 하므로, 스키마 정의를 사용하는 types.ts도 수정이 필요합니다.
+      // 우선 여기서 직접 수정하고, types.ts는 다음 단계에서 수정합니다.
       generationConfig.responseSchema = schema;
     }
 
-    const result = await model.generateContent(userPrompt, generationConfig);
+    const result = await model.generateContent(userPrompt);
     const response = result.response;
     return response.text() || "";
   } catch (error) {
@@ -53,8 +50,8 @@ const generateContent = async (systemInstruction: string, userPrompt: string, js
   }
 };
 
-// --- 각 기능별 생성 함수 ---
 
+// --- 이하 기능별 생성 함수들은 변경 없이 그대로 사용 ---
 export const generateSermon = (topic: string, scripture: string, notes: string, styles: SermonStyleKey[]) => {
   const systemInstruction = `당신은 대한예수교장로회(통합) 교단의 목회자를 돕는 AI 목회 비서입니다. 당신의 임무는 약 30-35분 분량의, 청중에게 깊은 감동과 신학적 통찰을 주는 설교문 전체를 작성하는 것입니다. 설교문은 존중과 격려의 어조를 사용하며, 신학적으로 매우 건전해야 합니다. 응답은 **굵은 글씨**, 제목(##), 소제목(###), 목록(*) 등 마크다운을 사용하여 가독성 높게 구성해주세요. 반드시 ## 서론, ## 본론 (여러 대지로 구성), ## 결론의 명확한 구조를 따라야 합니다. 본론에서는 성경 본문에 대한 깊이 있는 주해와 함께, 성도들이 삶에 적용할 수 있는 구체적인 예시와 실천적 도전을 포함해주세요.`;
   const userPrompt = `

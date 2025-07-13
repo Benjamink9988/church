@@ -1,7 +1,7 @@
 // src/types.ts
 
-// [추가 1] JSON 스키마 정의를 위해 @google/genai에서 Type을 가져옵니다.
-import { Type } from "@google/genai";
+// [수정] @google/genai에서 Type을 import하는 부분을 제거합니다.
+// import { Type } from "@google/genai";
 
 export enum Feature {
   Sermon = 'sermon',
@@ -38,23 +38,24 @@ export interface ScriptureResultItem {
     summary: string;
 }
 
-// [추가 2] 성경 검색 기능의 JSON 응답 스키마를 여기서 정의하고 내보냅니다.
-// 이렇게 하면 geminiService.ts에서 스키마를 직접 작성하지 않고 가져와서 사용할 수 있어 코드가 깔끔해집니다.
 export const ScriptureSearchSchema = {
-  type: Type.ARRAY,
+  // [수정] Type.ARRAY -> "array"
+  type: "array",
   items: {
-    type: Type.OBJECT,
+    // [수정] Type.OBJECT -> "object"
+    type: "object",
     properties: {
       reference: {
-        type: Type.STRING,
+        // [수정] Type.STRING -> "string"
+        type: "string",
         description: "성경 구절의 정확한 출처 (예: '요한복음 3:16')."
       },
       verse: {
-        type: Type.STRING,
+        type: "string",
         description: "성경 구절의 전체 텍스트."
       },
       summary: {
-        type: Type.STRING,
+        type: "string",
         description: "성경 구절의 의미에 대한 간략한 요약 또는 현대적 적용점."
       }
     },
