@@ -1,0 +1,6 @@
+{
+  "name": "목회 동반자 AI (Pastoral Companion AI)",
+  "description": "AI 기반 목회 및 교회 운영 지원 서비스입니다. 설교 준비, 기도문 작성, 주보 제작 등 목회 사역과 교회 행정 업무를 도와 목사님이 본질적인 사역에 더욱 집중할 수 있도록 돕습니다.",
+  "requestFramePermissions": [],
+  "prompt": ""
+}
