@@ -5,7 +5,7 @@ import {
   GoogleGenerativeAI,
   HarmCategory,
   HarmBlockThreshold
-} from "@google/generative-ai"; // 패키지 이름이 @google/generative-ai 로 변경될 수 있음. 확인 필요.
+} from "@google/genai";
 
 // 만약 위 import가 안되면, 아래 것으로 시도.
 // import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/genai";
